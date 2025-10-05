@@ -1,0 +1,33 @@
+import java.util.*;
+import java.util.stream.*;
+
+class Student {
+    String name;
+    double marks;
+    Student(String name, double marks) {
+        this.name = name; this.marks = marks;
+    }
+    @Override
+    public String toString() {
+        return name + " | " + marks;
+    }
+}
+
+public class StudentFilter {
+    public static void main(String[] args) {
+        List<Student> students = Arrays.asList(
+            new Student("Raunak", 80),
+            new Student("Aman", 65),
+            new Student("Nidhi", 92),
+            new Student("Suman", 70),
+            new Student("Rohit", 85)
+        );
+
+        System.out.println("Students with marks > 75 sorted by marks:");
+        students.stream()
+            .filter(s -> s.marks > 75)
+            .sorted((s1,s2) -> Double.compare(s1.marks,s2.marks))
+            .map(s -> s.name)
+            .forEach(System.out::println);
+    }
+}
