@@ -1,0 +1,130 @@
+Account.java (Entity)
+import jakarta.persistence.*;
+
+@Entity
+public class Account {
+    @Id
+    private int accNo;
+    private String name;
+    private double balance;
+
+    public Account() {}
+
+    public Account(int accNo, String name, double balance) {
+        this.accNo = accNo;
+        this.name = name;
+        this.balance = balance;
+    }
+
+    public int getAccNo() { return accNo; }
+    public void setAccNo(int accNo) { this.accNo = accNo; }
+
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
+}
+
+2️⃣ AccountDAO.java
+import org.hibernate.Session;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class AccountDAO {
+
+    public void update(Account acc, Session session) {
+        session.update(acc);
+    }
+
+    public Account getAccount(int accNo, Session session) {
+        return session.get(Account.class, accNo);
+    }
+}
+
+3️⃣ BankService.java
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class BankService {
+
+    @Autowired
+    private SessionFactory factory;
+
+    @Autowired
+    private AccountDAO dao;
+
+    @Transactional
+    public void transfer(int fromAcc, int toAcc, double amount) {
+        Session session = factory.getCurrentSession();
+
+        Account acc1 = dao.getAccount(fromAcc, session);
+        Account acc2 = dao.getAccount(toAcc, session);
+
+        if(acc1.getBalance() < amount) {
+            throw new RuntimeException("❌ Insufficient Balance");
+        }
+
+        acc1.setBalance(acc1.getBalance() - amount);
+        acc2.setBalance(acc2.getBalance() + amount);
+
+        dao.update(acc1, session);
+        dao.update(acc2, session);
+
+        System.out.println("✅ Transaction Successful");
+    }
+}
+
+4️⃣ SpringConfig.java
+import org.springframework.context.annotation.*;
+import org.springframework.orm.hibernate5.*;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import javax.sql.DataSource;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+@Configuration
+@EnableTransactionManagement
+@ComponentScan(basePackages = "your.package")
+public class SpringConfig {
+
+    @Bean
+    public DataSource ds() {
+        DriverManagerDataSource ds = new DriverManagerDataSource();
+        ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        ds.setUrl("jdbc:mysql://localhost:3306/testdb");
+        ds.setUsername("root");
+        ds.setPassword("YOUR_PASSWORD");
+        return ds;
+    }
+
+    @Bean
+    public LocalSessionFactoryBean sessionFactory() {
+        LocalSessionFactoryBean factory = new LocalSessionFactoryBean();
+        factory.setDataSource(ds());
+        factory.setPackagesToScan("your.package");
+        factory.getHibernateProperties().setProperty("hibernate.hbm2ddl.auto", "update");
+        return factory;
+    }
+
+    @Bean
+    public HibernateTransactionManager txnManager() {
+        return new HibernateTransactionManager(sessionFactory().getObject());
+    }
+}
+
+5️⃣ Main.java
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class Main {
+    public static void main(String[] args) {
+        AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext(SpringConfig.class);
+        BankService bank = ctx.getBean(BankService.class);
+
+        try {
+            bank.transfer(101, 102, 500);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
