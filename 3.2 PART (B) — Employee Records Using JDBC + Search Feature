@@ -1,0 +1,70 @@
+Create Table (MySQL)
+CREATE DATABASE company;
+USE company;
+
+CREATE TABLE Employee (
+    EmpID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Salary DOUBLE
+);
+
+INSERT INTO Employee VALUES
+(1, 'Rahul', 45000),
+(2, 'Priya', 55000),
+(3, 'Amit', 60000);
+
+2️⃣ EmployeeServlet.java
+import java.io.*;
+import java.sql.*;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+
+public class EmployeeServlet extends HttpServlet {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+
+        String searchID = request.getParameter("empId");
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/company", "root", "YOUR_PASSWORD");
+
+            Statement stmt = con.createStatement();
+
+            ResultSet rs;
+            if (searchID != null && !searchID.isEmpty()) {
+                rs = stmt.executeQuery("SELECT * FROM Employee WHERE EmpID=" + searchID);
+                out.println("<h3>Search Result</h3>");
+            } else {
+                rs = stmt.executeQuery("SELECT * FROM Employee");
+                out.println("<h3>All Employee Records</h3>");
+            }
+
+            out.println("<table border='1'><tr><th>ID</th><th>Name</th><th>Salary</th></tr>");
+            while (rs.next()) {
+                out.println("<tr><td>" + rs.getInt(1) + "</td><td>"
+                        + rs.getString(2) + "</td><td>" + rs.getDouble(3) + "</td></tr>");
+            }
+            out.println("</table><br>");
+
+            // Search Form
+            out.println("<form method='get'>Search by ID: <input type='text' name='empId'> <input type='submit' value='Search'></form>");
+
+            con.close();
+        } catch (Exception e) {
+            out.println(e);
+        }
+    }
+}
+
+3️⃣ web.xml Mapping
+<servlet>
+    <servlet-name>EmployeeServlet</servlet-name>
+    <servlet-class>EmployeeServlet</servlet-class>
+</servlet>
+
+<servlet-mapping>
+    <servlet-name>EmployeeServlet</servlet-name>
+    <url-pattern>/EmployeeServlet</url-pattern>
+</servlet-mapping>
