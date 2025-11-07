@@ -1,0 +1,50 @@
+Course.java
+public class Course {
+    public void courseName() {
+        System.out.println("Course: Computer Science Engineering");
+    }
+}
+
+2️⃣ Student.java
+public class Student {
+    private Course course;
+
+    public Student(Course course) {
+        this.course = course;
+    }
+
+    public void studentInfo() {
+        System.out.println("Student is enrolled in the following course:");
+        course.courseName();
+    }
+}
+
+3️⃣ AppConfig.java (Java-based Spring Config)
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public Course course() {
+        return new Course();
+    }
+
+    @Bean
+    public Student student() {
+        return new Student(course());
+    }
+}
+
+4️⃣ MainApp.java
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class MainApp {
+    public static void main(String[] args) {
+        ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
+        Student student = context.getBean(Student.class);
+        student.studentInfo();
+    }
+}
