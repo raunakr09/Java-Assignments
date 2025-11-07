@@ -1,0 +1,103 @@
+Student.java (Entity)
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "students")
+public class Student {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    private String name;
+    private String department;
+
+    public Student() {}
+
+    public Student(String name, String department) {
+        this.name = name;
+        this.department = department;
+    }
+
+    // Getters and Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+
+    @Override
+    public String toString() {
+        return id + " | " + name + " | " + department;
+    }
+}
+
+2️⃣ hibernate.cfg.xml
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+<session-factory>
+    <property name="connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+    <property name="connection.url">jdbc:mysql://localhost:3306/testdb</property>
+    <property name="connection.username">root</property>
+    <property name="connection.password">YOUR_PASSWORD</property>
+    <property name="dialect">org.hibernate.dialect.MySQL8Dialect</property>
+    <property name="hbm2ddl.auto">update</property>
+    <property name="show_sql">true</property>
+
+    <mapping class="Student"/>
+</session-factory>
+</hibernate-configuration>
+
+3️⃣ HibernateUtil.java
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+
+public class HibernateUtil {
+    private static SessionFactory factory = new Configuration().configure().buildSessionFactory();
+
+    public static SessionFactory getFactory() {
+        return factory;
+    }
+}
+
+4️⃣ CRUD Operations (Main File)
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import java.util.List;
+
+public class StudentCRUD {
+    public static void main(String[] args) {
+        // CREATE
+        Session session = HibernateUtil.getFactory().openSession();
+        Transaction tx = session.beginTransaction();
+        Student s1 = new Student("Raunak", "CSE");
+        session.save(s1);
+        tx.commit();
+        System.out.println("✅ Student Added");
+
+        // READ
+        List<Student> list = session.createQuery("from Student", Student.class).list();
+        list.forEach(System.out::println);
+
+        // UPDATE
+        tx = session.beginTransaction();
+        s1.setDepartment("Computer Science");
+        session.update(s1);
+        tx.commit();
+        System.out.println("✅ Student Updated");
+
+        // DELETE
+        tx = session.beginTransaction();
+        session.delete(s1);
+        tx.commit();
+        System.out.println("✅ Student Deleted");
+
+        session.close();
+    }
+}
